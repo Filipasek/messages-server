@@ -38,6 +38,9 @@ bower_components
 # folder with node_modules
 node_modules
 
+#file with credentials
+appstate.json
+
 # node-waf configuration
 .lock-wscript
 
