@@ -34,8 +34,12 @@ app.get("/createCredentials", (request, response) => {
             response.send("Nie można odczytać danych");
         } else {
             login({ email: credentials.email, password: credentials.password }, (err, api) => {
-                if (err) return console.error(err);
-                response.json(api.getAppState());
+                if (err) {
+                    response.status(401);
+                    response.json(err);
+                } else {
+                    response.json(api.getAppState());
+                }
             });
         }
     })
@@ -84,19 +88,44 @@ app.get("/threadList", (request, response) => {
                             } else {
                                 message = history[0].body;
                             }
-                            history_json[k] = {
-                                name: item.name,
-                                threadID: item.threadID,
-                                last_message: message,
-                                isRead: isRead,
-                                imageSrc: item.imageSrc,
-                                who: whose,
-                                when: getDateFromTimestamp(item.timestamp),
-                                service: "Messenger",
-                            }
-                            k++;
+                            var thread = history[0].threadID;
+                            var image;
+                            if (item.imageSrc === null) {
+                                api.getUserInfo(thread, (err, ret) => {
+                                    if (err) return console.error(err);
+                                    image = ret[thread].thumbSrc;
+                                    history_json[k] = {
+                                        name: item.name,
+                                        threadID: item.threadID,
+                                        last_message: message,
+                                        isRead: isRead,
+                                        imageSrc: image,
+                                        who: whose,
+                                        when: getDateFromTimestamp(item.timestamp),
+                                        service: "Messenger",
+                                    }
+                                    k++;
 
-                            resolve()
+                                    resolve()
+                                })
+                            } else {
+                                image = item.imageSrc;
+                                history_json[k] = {
+                                    name: item.name,
+                                    threadID: item.threadID,
+                                    last_message: message,
+                                    isRead: isRead,
+                                    imageSrc: image,
+                                    who: whose,
+                                    when: getDateFromTimestamp(item.timestamp),
+                                    service: "Messenger",
+                                }
+                                k++;
+
+                                resolve()
+                            }
+                            // console.log(image)
+
                         })
 
                     }));
@@ -110,6 +139,6 @@ app.get("/threadList", (request, response) => {
 
 
 // listen for requests :)
-const listener = app.listen(55400, () => {
+const listener = app.listen(55500, () => {
     console.log("Your app is listening on port " + listener.address().port);
 });
